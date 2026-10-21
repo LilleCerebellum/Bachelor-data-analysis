@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 import streamlit as st
 
+st.set_page_config(layout="centered")
+
 filename2026 = "Akutafd-010126-310826 (version 2).xlsx"
 filename2025 = "Akutafd datasæt 2025.xlsx"
 
@@ -87,6 +89,7 @@ df["Flowtid_timer"] = df["Flowtid_min"] / 60
 
 
 
+
 # Filtrering
 valgPRVT_STED = st.selectbox(
     "Vælg Prvt.stedgeo",
@@ -128,6 +131,17 @@ df_filtered = df_filtered.dropna(
         "Analyse_datetime", "Godk_datetime"
     ]
 )
+
+#filter extremer vaek for flowtid
+n = 20
+
+lower = df_filtered["Flowtid_timer"].quantile(0.15)
+upper = df_filtered["Flowtid_timer"].quantile(0.85)
+
+df_filtered = df_filtered[
+    (df_filtered["Flowtid_timer"] >= lower) &
+    (df_filtered["Flowtid_timer"] <= upper)
+]
 
 
 
@@ -270,14 +284,7 @@ st.pyplot(fig3)
 
 
 import altair as alt
-import pandas as pd
-import streamlit as st
 
-st.set_page_config(
-    page_title="Interessentanalyse – AKA",
-    page_icon="📊",
-    layout="wide",
-)
 
 DATA = [
     {
@@ -398,10 +405,7 @@ DATA = [
 ]
 
 st.title("Interessentanalyse – AKA")
-st.caption(
-    "Redigér vurderinger og håndtering i tabellen. "
-    "Matrixen og eksporten opdateres med dine ændringer."
-)
+
 
 st.subheader("Interessenttabel")
 
@@ -443,10 +447,6 @@ edited = st.data_editor(
     },
 )
 
-st.caption(
-    "Prioritet redigeres manuelt og ændres ikke automatisk, "
-    "når du ændrer indflydelse eller interesse."
-)
 
 st.subheader("Filtrér visningen")
 
@@ -578,15 +578,3 @@ else:
                 f"Prioritet: {row['Prioritet']}"
             )
             st.write("Håndtering:", row["Håndtering"])
-
-st.download_button(
-    label="Download den viste analyse som CSV",
-    data=filtered.to_csv(index=False, sep=";").encode("utf-8-sig"),
-    file_name="interessentanalyse.csv",
-    mime="text/csv",
-)
-
-st.caption(
-    "Ændringer gemmes ikke permanent på serveren. "
-    "Download CSV-filen, hvis du vil bevare dem."
-)
