@@ -266,3 +266,327 @@ ax3.set_title("Fordeling af Flowtid")
 ax3.grid(axis="y", linestyle="--", alpha=0.5)
 
 st.pyplot(fig3)
+
+
+
+import altair as alt
+import pandas as pd
+import streamlit as st
+
+st.set_page_config(
+    page_title="Interessentanalyse – AKA",
+    page_icon="📊",
+    layout="wide",
+)
+
+DATA = [
+    {
+        "Interessent": "Cheflæge for AKA",
+        "Rolle i projektet": (
+            "Beslutningstager, giver adgang til afdelingen "
+            "og vurderer løsningsforslag"
+        ),
+        "Indflydelse": 5,
+        "Interesse": 5,
+        "Prioritet": "Meget høj",
+        "Håndtering": (
+            "Tæt dialog, løbende status, inddrages i valg "
+            "og validering af løsning"
+        ),
+    },
+    {
+        "Interessent": "Overbioanalytiker",
+        "Rolle i projektet": (
+            "Ekspert i laboratoriets arbejdsgange, svartider og flaskehalse"
+        ),
+        "Indflydelse": 5,
+        "Interesse": 5,
+        "Prioritet": "Meget høj",
+        "Håndtering": (
+            "Nøgleinformant, inddrages aktivt i kortlægning og design"
+        ),
+    },
+    {
+        "Interessent": "Sygeplejersker på AKA",
+        "Rolle i projektet": (
+            "Udfører prøvetagning og patientkoordinering; kender daglig praksis"
+        ),
+        "Indflydelse": 4,
+        "Interesse": 5,
+        "Prioritet": "Høj",
+        "Håndtering": (
+            "Interviews og observationer; deres arbejdsbyrde "
+            "og praktiske muligheder skal respekteres"
+        ),
+    },
+    {
+        "Interessent": "Bioanalytikere",
+        "Rolle i projektet": (
+            "Udfører analyse, validering og frigivelse af svar"
+        ),
+        "Indflydelse": 4,
+        "Interesse": 4,
+        "Prioritet": "Høj",
+        "Håndtering": (
+            "Interview og proceskortlægning; inddrages "
+            "ved ændringer i laboratorieflow"
+        ),
+    },
+    {
+        "Interessent": "Læger på AKA",
+        "Rolle i projektet": (
+            "Bruger blodprøvesvar til klinisk beslutningstagning"
+        ),
+        "Indflydelse": 4,
+        "Interesse": 4,
+        "Prioritet": "Høj",
+        "Håndtering": (
+            "Kort interview eller spørgeskema; sikrer at løsningen "
+            "understøtter klinisk praksis"
+        ),
+    },
+    {
+        "Interessent": "Patienter",
+        "Rolle i projektet": (
+            "Direkte påvirket af ventetid, opholdstid og behandlingsforløb"
+        ),
+        "Indflydelse": 2,
+        "Interesse": 5,
+        "Prioritet": "Mellem",
+        "Håndtering": (
+            "Representeres gennem anonymiserede tidsdata og observationer; "
+            "ingen direkte belastende inddragelse"
+        ),
+    },
+    {
+        "Interessent": "Afdelingsledelse / sygehusledelse",
+        "Rolle i projektet": (
+            "Godkender ressourcebrug og eventuel implementering"
+        ),
+        "Indflydelse": 5,
+        "Interesse": 3,
+        "Prioritet": "Høj",
+        "Håndtering": (
+            "Informeres via kontaktperson og slutrapport; "
+            "løsning skal være ressourceneutral"
+        ),
+    },
+    {
+        "Interessent": "Laboratorieledelse",
+        "Rolle i projektet": (
+            "Ansvarlig for kapacitet, bemanding og kvalitet i analyseenheden"
+        ),
+        "Indflydelse": 4,
+        "Interesse": 4,
+        "Prioritet": "Høj",
+        "Håndtering": (
+            "Samarbejde gennem overbioanalytiker; informeres om anbefalinger"
+        ),
+    },
+    {
+        "Interessent": "IT / laboratorieinformationssystem",
+        "Rolle i projektet": (
+            "Leverer eller begrænser adgang til tidsstempler og data"
+        ),
+        "Indflydelse": 3,
+        "Interesse": 2,
+        "Prioritet": "Mellem",
+        "Håndtering": (
+            "Kun kontakt ved dataproblemer eller behov for ny dataudtrækning"
+        ),
+    },
+]
+
+st.title("Interessentanalyse – AKA")
+st.caption(
+    "Redigér vurderinger og håndtering i tabellen. "
+    "Matrixen og eksporten opdateres med dine ændringer."
+)
+
+st.subheader("Interessenttabel")
+
+edited = st.data_editor(
+    pd.DataFrame(DATA),
+    key="interessent_editor",
+    hide_index=True,
+    use_container_width=True,
+    height=460,
+    column_config={
+        "Interessent": st.column_config.TextColumn(
+            "Interessent", width="medium", required=True
+        ),
+        "Rolle i projektet": st.column_config.TextColumn(
+            "Rolle i projektet", width="large"
+        ),
+        "Indflydelse": st.column_config.NumberColumn(
+            "Indflydelse (1–5)",
+            min_value=1,
+            max_value=5,
+            step=1,
+            required=True,
+        ),
+        "Interesse": st.column_config.NumberColumn(
+            "Interesse (1–5)",
+            min_value=1,
+            max_value=5,
+            step=1,
+            required=True,
+        ),
+        "Prioritet": st.column_config.SelectboxColumn(
+            "Prioritet",
+            options=["Lav", "Mellem", "Høj", "Meget høj"],
+            required=True,
+        ),
+        "Håndtering": st.column_config.TextColumn(
+            "Håndtering", width="large"
+        ),
+    },
+)
+
+st.caption(
+    "Prioritet redigeres manuelt og ændres ikke automatisk, "
+    "når du ændrer indflydelse eller interesse."
+)
+
+st.subheader("Filtrér visningen")
+
+selected_priorities = st.multiselect(
+    "Vis prioriteter",
+    options=["Lav", "Mellem", "Høj", "Meget høj"],
+    default=["Lav", "Mellem", "Høj", "Meget høj"],
+)
+
+filtered = edited[
+    edited["Prioritet"].isin(selected_priorities)
+].copy()
+
+col1, col2, col3 = st.columns(3)
+col1.metric("Interessenter i visningen", len(filtered))
+col2.metric(
+    "Meget høj prioritet",
+    int(filtered["Prioritet"].eq("Meget høj").sum()),
+)
+col3.metric(
+    "Høj prioritet",
+    int(filtered["Prioritet"].eq("Høj").sum()),
+)
+
+st.subheader("Indflydelse–interesse-matrix")
+
+st.caption(
+    "I denne visning regnes 4–5 som høj og 1–3 som lavere. "
+    "Opdelingen er et visuelt hjælpemiddel, ikke en beregning af prioritet. "
+    "Interessenter med samme koordinater samles i ét punkt."
+)
+
+if filtered.empty:
+    st.info("Ingen interessenter matcher det valgte filter.")
+else:
+      # Give each stakeholder a separate label at their shared coordinates.
+    plot_data = filtered.copy()
+
+    plot_data["GroupSize"] = (
+        plot_data.groupby(["Interesse", "Indflydelse"])["Interessent"]
+        .transform("size")
+    )
+
+    plot_data["LabelIndex"] = (
+        plot_data.groupby(["Interesse", "Indflydelse"]).cumcount()
+    )
+
+    # Centre the stack of labels around the actual score.
+    plot_data["LabelY"] = (
+        plot_data["Indflydelse"]
+        + (
+            (plot_data["GroupSize"] - 1) / 2
+            - plot_data["LabelIndex"]
+        ) * 0.22
+    )
+
+    quadrants = pd.DataFrame([
+        {
+            "x1": 0.5, "x2": 3.5, "y1": 3.5, "y2": 5.5,
+            "Farve": "#fff0ce",
+        },
+        {
+            "x1": 3.5, "x2": 5.5, "y1": 3.5, "y2": 5.5,
+            "Farve": "#dcefe1",
+        },
+        {
+            "x1": 0.5, "x2": 3.5, "y1": 0.5, "y2": 3.5,
+            "Farve": "#eeeeee",
+        },
+        {
+            "x1": 3.5, "x2": 5.5, "y1": 0.5, "y2": 3.5,
+            "Farve": "#deebf7",
+        },
+    ])
+
+    background = alt.Chart(quadrants).mark_rect(opacity=0.65).encode(
+        x=alt.X(
+            "x1:Q",
+            title="Interesse",
+            scale=alt.Scale(domain=[0.5, 5.5]),
+            axis=alt.Axis(values=[1, 2, 3, 4, 5]),
+        ),
+        x2="x2:Q",
+        y=alt.Y(
+            "y1:Q",
+            title="Indflydelse",
+            scale=alt.Scale(domain=[0.5, 5.5]),
+            axis=alt.Axis(values=[1, 2, 3, 4, 5]),
+        ),
+        y2="y2:Q",
+        color=alt.Color("Farve:N", scale=None, legend=None),
+    )
+
+    labels = alt.Chart(plot_data).mark_text(
+        align="center",
+        baseline="middle",
+        fontSize=12,
+        fontWeight="bold",
+        color="#17324d",
+    ).encode(
+        x=alt.X("Interesse:Q", title="Interesse"),
+        y=alt.Y("LabelY:Q", title="Indflydelse"),
+        text="Interessent:N",
+        tooltip=[
+            alt.Tooltip("Interessent:N", title="Interessent"),
+            alt.Tooltip("Interesse:Q", title="Interesse"),
+            alt.Tooltip("Indflydelse:Q", title="Indflydelse"),
+            alt.Tooltip("Prioritet:N", title="Prioritet"),
+            alt.Tooltip("Håndtering:N", title="Håndtering"),
+        ],
+    )
+
+    chart = (background + labels).properties(height=550)
+
+    st.altair_chart(chart, use_container_width=True)
+    
+    st.caption(
+        "Tallet i hvert punkt viser antal interessenter. "
+        "Hold musen over punktet for at se navnene."
+    )
+
+    with st.expander("Se roller og håndtering uden afkortet tabeltekst"):
+        for _, row in filtered.iterrows():
+            st.subheader(row["Interessent"])
+            st.write("Rolle:", row["Rolle i projektet"])
+            st.write(
+                f"Indflydelse: {row['Indflydelse']} · "
+                f"Interesse: {row['Interesse']} · "
+                f"Prioritet: {row['Prioritet']}"
+            )
+            st.write("Håndtering:", row["Håndtering"])
+
+st.download_button(
+    label="Download den viste analyse som CSV",
+    data=filtered.to_csv(index=False, sep=";").encode("utf-8-sig"),
+    file_name="interessentanalyse.csv",
+    mime="text/csv",
+)
+
+st.caption(
+    "Ændringer gemmes ikke permanent på serveren. "
+    "Download CSV-filen, hvis du vil bevare dem."
+)
