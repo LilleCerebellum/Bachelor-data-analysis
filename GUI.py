@@ -53,15 +53,15 @@ for col in dato_cols:
     df[col] = pd.to_datetime(df[col], format="%d/%m/%Y", errors="coerce")
 
 for col in kl_cols:
-    df[col] = pd.to_datetime(df[col], format="%H:%M", errors="coerce").dt.time
+    df[col] = pd.to_timedelta(df[col].astype(str), errors="coerce")
 
 df["UgedagPrvt"] = df["Prvt.dato"].dt.day_name()
 
-df["Pl.prvt_datetime"] = df["Pl.prvt.dato"].dt.normalize() + df["Pl.prvt.kl"]
-df["Prvt_datetime"] = df["Prvt.dato"].dt.normalize() + df["Prvt.kl"]
-df["Modtag_datetime"] = df["Modtag.dato"].dt.normalize() + df["Modtag.kl"]
-df["Analyse_datetime"] = df["Analysedato"].dt.normalize() + df["Ana.kl."]
-df["Godk_datetime"] = df["Godk.dato"].dt.normalize() + df["Godk.kl."]
+df["Pl.prvt_datetime"] = df["Pl.prvt.dato"] + df["Pl.prvt.kl"]
+df["Prvt_datetime"] = df["Prvt.dato"] + df["Prvt.kl"]
+df["Modtag_datetime"] = df["Modtag.dato"] + df["Modtag.kl"]
+df["Analyse_datetime"] = df["Analysedato"] + df["Ana.kl."]
+df["Godk_datetime"] = df["Godk.dato"] + df["Godk.kl."]
 
 
 
@@ -91,6 +91,13 @@ df["Flowtid_timer"] = df["Flowtid_min"] / 60
 
 
 
+df_filtered = df.copy()
+
+
+df_filtered = df_filtered[
+    (df_filtered["Prøvetagning til modtagelse"] >= 1) &
+    (df_filtered["Modtagelse til analyse"] >= 1)
+]
 
 
 # Filtrering
@@ -100,13 +107,13 @@ valgPRVT_STED = st.selectbox(
 )
 
 if valgPRVT_STED == "Begge":
-    df_filtered = df[
-        df["Prvt.stedgeo"].isin(["Tages nu", "Tages på runde"])
+    df_filtered = df_filtered[
+        df_filtered["Prvt.stedgeo"].isin(["Tages nu", "Tages på runde"])
     ]
 elif valgPRVT_STED == "Tages nu":
-    df_filtered = df[df["Prvt.stedgeo"] == "Tages nu"]
+    df_filtered = df_filtered[df_filtered]
 else:
-    df_filtered = df[df["Prvt.stedgeo"] == "Tages på runde"]
+    df_filtered = df_filtered[df_filtered["Prvt.stedgeo"] == "Tages på runde"]
 
 
 
@@ -116,15 +123,15 @@ valgKVNT_NAVN = st.selectbox(
 )
 
 if valgKVNT_NAVN == "Alle":
-    df_filtered = df[
-        df["Kvnt.navn"].isin(["Kreatinin;P", "C-reaktivt protein [CRP];P", "Leukocytter;B"])
+    df_filtered = df_filtered[
+        df_filtered["Kvnt.navn"].isin(["Kreatinin;P", "C-reaktivt protein [CRP];P", "Leukocytter;B"])
     ]
 elif valgKVNT_NAVN == "Kreatinin;P":
-    df_filtered = df[df["Kvnt.navn"] == "Kreatinin;P"]
+    df_filtered = df_filtered[df_filtered["Kvnt.navn"] == "Kreatinin;P"]
 elif valgKVNT_NAVN == "C-reaktivt protein [CRP];P":
-    df_filtered = df[df["Kvnt.navn"] == "C-reaktivt protein [CRP];P"]
+    df_filtered = df_filtered[df_filtered["Kvnt.navn"] == "C-reaktivt protein [CRP];P"]
 elif valgKVNT_NAVN == "Leukocytter;B":
-    df_filtered = df[df["Kvnt.navn"] == "Leukocytter;B"]
+    df_filtered = df_filtered[df_filtered["Kvnt.navn"] == "Leukocytter;B"]
 
 
 
