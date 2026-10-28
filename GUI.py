@@ -39,7 +39,7 @@ elif valgAAR == "2026":
 # Konverter datoer og klokkeslæt
 dato_cols = [
     "Pl.prvt.dato", "Prvt.dato", "Modtag.dato",
-    "Analysedato"
+    "Analysedato", "Godk.dato"
 ]
 
 kl_cols = [
@@ -50,10 +50,10 @@ kl_cols = [
 
 
 for col in dato_cols:
-    df[col] = pd.to_datetime(df[col], errors="coerce")
+    df[col] = pd.to_datetime(df[col], format="%d/%m/%Y", errors="coerce")
 
 for col in kl_cols:
-    df[col] = pd.to_timedelta(df[col].astype(str), errors="coerce")
+    df[col] = pd.to_datetime(df[col], format="%H:%M", errors="coerce").dt.time
 
 df["UgedagPrvt"] = df["Prvt.dato"].dt.day_name()
 
@@ -62,6 +62,9 @@ df["Prvt_datetime"] = df["Prvt.dato"].dt.normalize() + df["Prvt.kl"]
 df["Modtag_datetime"] = df["Modtag.dato"].dt.normalize() + df["Modtag.kl"]
 df["Analyse_datetime"] = df["Analysedato"].dt.normalize() + df["Ana.kl."]
 df["Godk_datetime"] = df["Godk.dato"].dt.normalize() + df["Godk.kl."]
+
+
+
 
 
 df["Planlagt til prøvetagning"] = (
