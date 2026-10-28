@@ -39,7 +39,7 @@ elif valgAAR == "2026":
 # Konverter datoer og klokkeslæt
 dato_cols = [
     "Pl.prvt.dato", "Prvt.dato", "Modtag.dato",
-    "Analysedato", "Godk.dato"
+    "Analysedato"
 ]
 
 kl_cols = [
@@ -50,30 +50,18 @@ kl_cols = [
 
 
 for col in dato_cols:
-    df[col] = pd.to_datetime(df[col], format="%d/%m/%Y", errors="coerce")
+    df[col] = pd.to_datetime(df[col], errors="coerce")
 
 for col in kl_cols:
-    df[col] = pd.to_datetime(df[col], format="%H:%M", errors="coerce").dt.time
-
-
-
+    df[col] = pd.to_timedelta(df[col].astype(str), errors="coerce")
 
 df["UgedagPrvt"] = df["Prvt.dato"].dt.day_name()
 
-def lav_datetime(dato_col, kl_col, navn):
-    df[navn] = df[dato_col].dt.normalize() + pd.to_timedelta(
-        df[kl_col].astype(str), errors="coerce"
-    )
-
-lav_datetime("Pl.prvt.dato", "Pl.prvt.kl", "Pl.prvt_datetime")
-lav_datetime("Prvt.dato", "Prvt.kl", "Prvt_datetime")
-lav_datetime("Modtag.dato", "Modtag.kl", "Modtag_datetime")
-lav_datetime("Analysedato", "Ana.kl.", "Analyse_datetime")
-lav_datetime("Godk.dato", "Godk.kl.", "Godk_datetime")
-
-
-
-
+df["Pl.prvt_datetime"] = df["Pl.prvt.dato"].dt.normalize() + df["Pl.prvt.kl"]
+df["Prvt_datetime"] = df["Prvt.dato"].dt.normalize() + df["Prvt.kl"]
+df["Modtag_datetime"] = df["Modtag.dato"].dt.normalize() + df["Modtag.kl"]
+df["Analyse_datetime"] = df["Analysedato"].dt.normalize() + df["Ana.kl."]
+df["Godk_datetime"] = df["Godk.dato"].dt.normalize() + df["Godk.kl."]
 
 
 df["Planlagt til prøvetagning"] = (
